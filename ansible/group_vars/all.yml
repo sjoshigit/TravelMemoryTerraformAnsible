@@ -1,0 +1,9 @@
+---
+project_repo: "https://github.com/sjoshigit/TravelMemoryTerraformAnsible.git"
+app_root: "/var/www/travelmemory"
+node_version: "18.x"
+db_name: "travelmemory"
+db_port: 27017
+backend_port: 3001
+db_user: "travel_user"
+db_password: "TravelSecurePassword2026!"

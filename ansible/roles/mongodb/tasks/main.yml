@@ -1,0 +1,73 @@
+---
+- name: Ensure keyrings directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download and de-armor MongoDB official GPG key
+  shell: |
+    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg
+  args:
+    creates: /etc/apt/keyrings/mongodb-server-7.0.gpg
+
+- name: Add MongoDB official apt repository
+  apt_repository:
+    repo: "deb [ arch=amd64,arm64 signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse"
+    state: present
+    filename: mongodb-org-7.0
+
+- name: Install MongoDB Community Server and Python dependencies
+  apt:
+    name:
+      - mongodb-org
+      - python3-pip
+      - python3-pymongo
+    state: present
+    update_cache: yes
+
+- name: Update MongoDB configuration to bind internal IP
+  lineinfile:
+    path: /etc/mongod.conf
+    regexp: '^  bindIp:'
+    line: "  bindIp: 127.0.0.1,{{ ansible_default_ipv4.address }}"
+  notify: Restart mongod
+
+- name: Ensure MongoDB service is active and enabled
+  service:
+    name: mongod
+    state: started
+    enabled: yes
+
+- name: Apply any pending handlers
+  meta: flush_handlers
+
+- name: Create database user for TravelMemory
+  community.mongodb.mongodb_user:
+    database: "{{ db_name }}"
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    roles:
+      - db: "{{ db_name }}"
+        role: "readWrite"
+      - db: "{{ db_name }}"
+        role: "dbAdmin"
+    state: present
+
+- name: Configure UFW to permit port 27017 from private subnet
+  ufw:
+    rule: allow
+    proto: tcp
+    port: "{{ db_port }}"
+    src: "10.0.0.0/16"
+
+- name: Allow SSH on private database instance
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+
+- name: Enable UFW firewall
+  ufw:
+    state: enabled
+    policy: deny

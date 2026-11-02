@@ -1,0 +1,18 @@
+---
+- name: Update apt repository cache and upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Install baseline system dependencies
+  apt:
+    name:
+      - curl
+      - git
+      - ufw
+      - htop
+      - software-properties-common
+      - ca-certificates
+      - gnupg
+    state: present

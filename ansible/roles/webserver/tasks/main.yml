@@ -1,0 +1,115 @@
+---
+- name: Add NodeSource official repository setup script
+  shell: "curl -fsSL https://deb.nodesource.com/setup_{{ node_version }} | bash -"
+  args:
+    creates: /etc/apt/sources.list.d/nodesource.list
+
+- name: Install Node.js, NPM, and Nginx
+  apt:
+    name:
+      - nodejs
+      - nginx
+    state: present
+    update_cache: yes
+
+- name: Install PM2 process manager globally
+  npm:
+    name: pm2
+    global: yes
+    state: present
+
+- name: Ensure application deployment directory exists
+  file:
+    path: "{{ app_root }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Clone TravelMemory repository
+  git:
+    repo: "{{ project_repo }}"
+    dest: "{{ app_root }}"
+    version: main
+    force: yes
+  become_user: ubuntu
+
+- name: Deploy Backend .env configuration
+  template:
+    src: backend.env.j2
+    dest: "{{ app_root }}/backend/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Install Backend dependencies
+  npm:
+    path: "{{ app_root }}/backend"
+  become_user: ubuntu
+
+- name: Deploy Frontend .env configuration
+  template:
+    src: frontend.env.j2
+    dest: "{{ app_root }}/frontend/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Install Frontend dependencies
+  npm:
+    path: "{{ app_root }}/frontend"
+  become_user: ubuntu
+
+- name: Compile React Frontend build
+  command: npm run build
+  args:
+    chdir: "{{ app_root }}/frontend"
+  become_user: ubuntu
+
+- name: Launch Express application via PM2
+  command: pm2 start index.js --name "travelmemory-backend" --update-env
+  args:
+    chdir: "{{ app_root }}/backend"
+  become_user: ubuntu
+  register: pm2_start
+  changed_when: "'online' in pm2_start.stdout"
+
+- name: Save PM2 daemon process state
+  command: pm2 save
+  become_user: ubuntu
+
+- name: Deploy Nginx reverse proxy virtual host
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/travelmemory
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload nginx
+
+- name: Enable Nginx TravelMemory site
+  file:
+    src: /etc/nginx/sites-available/travelmemory
+    dest: /etc/nginx/sites-enabled/travelmemory
+    state: link
+  notify: Reload nginx
+
+- name: Disable default Nginx site configuration
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Allow HTTP and SSH through UFW on Web Server
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - 80
+    - 22
+
+- name: Enable UFW firewall on Web Server
+  ufw:
+    state: enabled
+    policy: deny
