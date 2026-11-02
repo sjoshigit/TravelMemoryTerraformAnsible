@@ -132,3 +132,94 @@ dist
 
 # Uploaded images
 backend/uploads/
+
+# ==========================================
+# WSL / Windows Metadata Artifacts
+# ==========================================
+*:Zone.Identifier
+*.Zone.Identifier
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==========================================
+# Terraform State & Local Artifacts
+# ==========================================
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfplan
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+crash.log
+crash.*.log
+
+# ==========================================
+# Ansible Credentials & Runtime Caches
+# ==========================================
+ansible/.ansible/
+*.retry
+ansible/*.retry
+inventory.ini
+inventory-local.ini
+*.vault
+.vault_pass
+.vault_password
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pub
+id_rsa*
+aws-credentials*
+
+# ==========================================
+# Node.js / MERN (Backend & Frontend)
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Production Build Directories
+frontend/build/
+backend/dist/
+build/
+dist/
+
+# PM2 Logs & Process Dump
+.pm2/
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ==========================================
+# Operating System & IDE Files
+# ==========================================
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.sublime-workspace
+*.swp
+*.swo
+*~
