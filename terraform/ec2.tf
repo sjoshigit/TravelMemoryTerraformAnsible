@@ -1,6 +1,6 @@
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical official owner ID
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
@@ -18,8 +18,8 @@ resource "aws_key_pair" "deployer" {
   public_key = file(pathexpand(var.public_key_path))
 }
 
-# Web Server EC2 Instance
-resource "aws_ec2_instance" "web" {
+# Web Server EC2 Instance (Line 22)
+resource "aws_instance" "web" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.public.id
@@ -40,8 +40,8 @@ resource "aws_ec2_instance" "web" {
   }
 }
 
-# Database Server EC2 Instance
-resource "aws_ec2_instance" "db" {
+# Database Server EC2 Instance (Line 44)
+resource "aws_instance" "db" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.private.id
